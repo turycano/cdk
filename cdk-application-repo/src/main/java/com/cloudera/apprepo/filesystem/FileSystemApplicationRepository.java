@@ -69,24 +69,9 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
     }
 
     if (bundle.isDirectory()) {
-      List<Path> bundleItemPaths = Lists.newArrayList();
-
-      try {
-        for (String itemName : bundle.list()) {
-          bundleItemPaths.add(new Path(bundle.getAbsolutePath(), itemName));
-        }
-
-        fileSystem.copyFromLocalFile(false, true,
-          bundleItemPaths.toArray(new Path[bundleItemPaths.size()]), applicationDirectoryTmp);
-      } catch (IOException e) {
-        throw new ApplicationRepositoryException(
-          "Failed to copy bundle contents from:"
-            + bundle
-            + " to directory:"
-            + applicationDirectoryTmp, e);
-      }
+      deployDirectory(bundle, applicationDirectoryTmp);
     } else if (bundle.isFile()) {
-      throw new UnsupportedOperationException("We don't yet properly unpack and deploy file bundles:" + bundle);
+      deployFile(bundle);
     } else {
       throw new ApplicationRepositoryException(
         "Don't know how to deploy bundle:" + bundle + " (not a file or directory)");
@@ -102,6 +87,30 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
       throw new ApplicationRepositoryException(
         "Internal error renaming application directory from:"
           + applicationDirectoryTmp + " to:" + applicationDirectory);
+    }
+  }
+
+  private void deployFile(File bundle) {
+    throw new UnsupportedOperationException(
+      "We don't yet properly unpack and deploy file bundles:" + bundle);
+  }
+
+  private void deployDirectory(File bundle, Path applicationDirectory) {
+    List<Path> bundleItemPaths = Lists.newArrayList();
+
+    try {
+      for (String itemName : bundle.list()) {
+        bundleItemPaths.add(new Path(bundle.getAbsolutePath(), itemName));
+      }
+
+      fileSystem.copyFromLocalFile(false, true,
+        bundleItemPaths.toArray(new Path[bundleItemPaths.size()]), applicationDirectory);
+    } catch (IOException e) {
+      throw new ApplicationRepositoryException(
+        "Failed to copy bundle contents from:"
+          + bundle
+          + " to directory:"
+          + applicationDirectory, e);
     }
   }
 
