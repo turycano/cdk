@@ -77,7 +77,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
         }
 
         fileSystem.copyFromLocalFile(false, true,
-          bundleItemPaths.toArray(new Path[0]), applicationDirectoryTmp);
+          bundleItemPaths.toArray(new Path[bundleItemPaths.size()]), applicationDirectoryTmp);
       } catch (IOException e) {
         throw new ApplicationRepositoryException(
           "Failed to copy bundle contents from:"
