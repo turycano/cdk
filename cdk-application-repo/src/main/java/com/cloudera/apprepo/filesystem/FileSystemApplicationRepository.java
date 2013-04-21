@@ -17,6 +17,7 @@ package com.cloudera.apprepo.filesystem;
 
 import com.cloudera.apprepo.ApplicationRepository;
 import com.cloudera.apprepo.ApplicationRepositoryException;
+import com.cloudera.apprepo.BundleDescriptor;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -48,7 +49,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
   }
 
   @Override
-  public void deploy(String name, File bundle) {
+  public BundleDescriptor deploy(String name, File bundle) {
     Preconditions.checkArgument(name != null, "Name can not be null");
     Preconditions.checkArgument(bundle != null, "Bundle file can not be null");
 
@@ -68,10 +69,12 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
         "Internal error creating application directory:" + applicationDirectoryTmp, e);
     }
 
+    BundleDescriptor descriptor;
+
     if (bundle.isDirectory()) {
-      deployDirectory(bundle, applicationDirectoryTmp);
+      descriptor = deployDirectory(bundle, applicationDirectoryTmp);
     } else if (bundle.isFile()) {
-      deployFile(bundle);
+      descriptor = deployFile(bundle);
     } else {
       throw new ApplicationRepositoryException(
         "Don't know how to deploy bundle:" + bundle + " (not a file or directory)");
@@ -88,15 +91,22 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
         "Internal error renaming application directory from:"
           + applicationDirectoryTmp + " to:" + applicationDirectory);
     }
+
+    logger.debug("Deployed bundle with descriptor:{}", descriptor);
+
+    return descriptor;
   }
 
-  private void deployFile(File bundle) {
+  private BundleDescriptor deployFile(File bundle) {
     throw new UnsupportedOperationException(
       "We don't yet properly unpack and deploy file bundles:" + bundle);
   }
 
-  private void deployDirectory(File bundle, Path applicationDirectory) {
+  private BundleDescriptor deployDirectory(File bundle, Path applicationDirectory) {
     List<Path> bundleItemPaths = Lists.newArrayList();
+
+    BundleDescriptor descriptor = BundleDescriptor.fromFile(
+      new File(bundle, "descriptor.properties"));
 
     try {
       for (String itemName : bundle.list()) {
@@ -112,6 +122,8 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
           + " to directory:"
           + applicationDirectory, e);
     }
+
+    return descriptor;
   }
 
   @Override

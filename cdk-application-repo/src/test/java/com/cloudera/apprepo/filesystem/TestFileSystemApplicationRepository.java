@@ -16,6 +16,7 @@
 package com.cloudera.apprepo.filesystem;
 
 import com.cloudera.apprepo.ApplicationRepository;
+import com.cloudera.apprepo.BundleDescriptor;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import org.apache.hadoop.conf.Configuration;
@@ -58,17 +59,26 @@ public class TestFileSystemApplicationRepository {
 
     logger.debug("repo:{}", repo);
 
-    repo.deploy("test1", new File(Resources.getResource("bundles/b1").getFile()));
+    BundleDescriptor descriptor = repo.deploy("test1",
+      new File(Resources.getResource("bundles/b1").getFile()));
+
     Assert.assertTrue("test1 directory doesn't exist",
       fileSystem.exists(new Path(testDirectory, "test1")));
     Assert.assertTrue("test1/test.txt doesn't exist",
       fileSystem.exists(new Path(testDirectory, "test1/test.txt")));
+    Assert.assertNotNull("Descriptor is null", descriptor);
+    Assert.assertEquals("1", descriptor.getVersion());
+    Assert.assertEquals("classpath-dependency", descriptor.getType());
 
-    repo.deploy("test2", new File(Resources.getResource("bundles/b2").getFile()));
+    descriptor = repo.deploy("test2", new File(Resources.getResource("bundles/b2").getFile()));
+
     Assert.assertTrue("test2 directory doesn't exist",
       fileSystem.exists(new Path(testDirectory, "test2")));
     Assert.assertTrue("test2/libs directory doesn't exist",
       fileSystem.exists(new Path(testDirectory, "test2/libs")));
+    Assert.assertNotNull("Descriptor is null", descriptor);
+    Assert.assertEquals("1", descriptor.getVersion());
+    Assert.assertEquals("java-mr1", descriptor.getType());
   }
 
   @Test

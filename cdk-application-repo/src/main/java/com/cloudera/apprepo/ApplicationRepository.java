@@ -19,7 +19,7 @@ import java.io.File;
 
 public interface ApplicationRepository {
 
-  void deploy(String name, File bundleFile);
+  BundleDescriptor deploy(String name, File bundleFile);
 
   void undeploy(String name);
 
