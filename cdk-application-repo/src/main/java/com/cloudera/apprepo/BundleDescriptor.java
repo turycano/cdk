@@ -41,7 +41,6 @@ public class BundleDescriptor {
   }
 
   public static BundleDescriptor fromFile(File propertyFile) {
-    Properties properties = new Properties();
     Closer closer = Closer.create();
 
     try {
