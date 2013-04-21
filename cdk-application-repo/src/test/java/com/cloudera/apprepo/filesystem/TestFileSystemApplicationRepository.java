@@ -82,6 +82,29 @@ public class TestFileSystemApplicationRepository {
   }
 
   @Test
+  public void testFailedDeploy() throws IOException {
+    ApplicationRepository repo = new FileSystemApplicationRepository.Builder()
+      .fileSystem(fileSystem)
+      .directory(testDirectory)
+      .get();
+
+    Exception caughtEx = null;
+
+    try {
+      BundleDescriptor descriptor = repo.deploy("should-fail",
+        new File("i-do-not-exist"));
+    } catch (IllegalArgumentException e) {
+      caughtEx = e;
+    }
+
+    Assert.assertNotNull("Expected exception not thrown", caughtEx);
+    Assert.assertFalse("Directory should-fail.tmp should not exist",
+      fileSystem.exists(new Path(testDirectory, "should-fail.tmp")));
+    Assert.assertFalse("Directory should-fail should not exist",
+      fileSystem.exists(new Path(testDirectory, "should-fail")));
+  }
+
+  @Test
   public void testUndeploy() throws IOException {
     ApplicationRepository repo = new FileSystemApplicationRepository.Builder()
       .fileSystem(fileSystem)

@@ -52,6 +52,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
   public BundleDescriptor deploy(String name, File bundle) {
     Preconditions.checkArgument(name != null, "Name can not be null");
     Preconditions.checkArgument(bundle != null, "Bundle file can not be null");
+    Preconditions.checkArgument(bundle.exists(), "Bundle must exist");
 
     Path applicationDirectoryTmp = new Path(directory, name + ".tmp");
     Path applicationDirectory = new Path(directory, name);
