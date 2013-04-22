@@ -15,14 +15,28 @@
  */
 package com.cloudera.apprepo;
 
-import java.io.File;
+import com.google.common.base.Objects;
 
-public interface ApplicationRepository {
+public class ApplicationExecutor {
 
-  BundleDescriptor deploy(String name, File bundleFile);
+  private ApplicationExecutorDelegate delegate;
+  private BundleDescriptor descriptor;
 
-  void undeploy(String name);
+  public ApplicationExecutor(ApplicationExecutorDelegate delegate, BundleDescriptor descriptor) {
+    this.delegate = delegate;
+    this.descriptor = descriptor;
+  }
 
-  BundleDescriptor get(String name);
+  public void execute() {
+    delegate.execute(descriptor);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+      .add("delegate", delegate)
+      .add("descriptor", descriptor)
+      .toString();
+  }
 
 }

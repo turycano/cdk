@@ -15,14 +15,8 @@
  */
 package com.cloudera.apprepo;
 
-import java.io.File;
+public interface ApplicationExecutorDelegate {
 
-public interface ApplicationRepository {
-
-  BundleDescriptor deploy(String name, File bundleFile);
-
-  void undeploy(String name);
-
-  BundleDescriptor get(String name);
+  void execute(BundleDescriptor descriptor);
 
 }

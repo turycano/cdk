@@ -21,8 +21,11 @@ import com.cloudera.apprepo.BundleDescriptor;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closer;
 import com.google.common.io.Files;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.slf4j.Logger;
@@ -143,6 +146,33 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
     } catch (IOException e) {
       throw new ApplicationRepositoryException(
         "Internal error deleting application directory:" + applicationDirectory, e);
+    }
+  }
+
+  @Override
+  public BundleDescriptor get(String name) {
+    Preconditions.checkArgument(name != null, "Name may not be null");
+
+    Path applicationDirectory = new Path(directory, name);
+    Closer closer = Closer.create();
+    FSDataInputStream inputStream;
+
+    try {
+      return BundleDescriptor.fromInputStream(
+        closer.register(
+          fileSystem.open(
+            new Path(applicationDirectory, "descriptor.properties")
+          )
+        )
+      );
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    } finally {
+      try {
+        closer.close();
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 

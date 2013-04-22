@@ -15,14 +15,22 @@
  */
 package com.cloudera.apprepo;
 
-import java.io.File;
+public class ApplicationExecutorException extends RuntimeException {
 
-public interface ApplicationRepository {
+  public ApplicationExecutorException() {
+    super();
+  }
 
-  BundleDescriptor deploy(String name, File bundleFile);
+  public ApplicationExecutorException(String message) {
+    super(message);
+  }
 
-  void undeploy(String name);
+  public ApplicationExecutorException(String message, Throwable t) {
+    super(message, t);
+  }
 
-  BundleDescriptor get(String name);
+  public ApplicationExecutorException(Throwable t) {
+    super(t);
+  }
 
 }
