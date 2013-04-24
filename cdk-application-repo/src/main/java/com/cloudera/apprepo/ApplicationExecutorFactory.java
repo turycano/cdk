@@ -38,7 +38,7 @@ public class ApplicationExecutorFactory {
   }
 
   public ApplicationExecutor getExecutor(String name) {
-    BundleDescriptor descriptor = repository.get(name);
+    BundleDescriptor descriptor = repository.getDescriptor(name);
 
     Preconditions.checkState(executors.containsKey(descriptor.getType()),
       "No configured executor for descriptor type:%s", descriptor.getType());
