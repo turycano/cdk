@@ -15,7 +15,10 @@
  */
 package com.cloudera.apprepo;
 
+import com.google.common.io.InputSupplier;
+
 import java.io.File;
+import java.io.InputStream;
 
 public interface ApplicationRepository {
 
@@ -23,6 +26,8 @@ public interface ApplicationRepository {
 
   void undeploy(String name);
 
-  BundleDescriptor get(String name);
+  BundleDescriptor getDescriptor(String name);
+
+  InputSupplier<InputStream> getBundleSupplier(String name);
 
 }

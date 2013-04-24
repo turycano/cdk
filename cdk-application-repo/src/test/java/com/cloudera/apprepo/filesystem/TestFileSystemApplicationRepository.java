@@ -79,6 +79,12 @@ public class TestFileSystemApplicationRepository {
     Assert.assertNotNull("Descriptor is null", descriptor);
     Assert.assertEquals("1", descriptor.getVersion());
     Assert.assertEquals("java-mr1", descriptor.getType());
+
+    repo.deploy("test3", new File(Resources.getResource("bundles/b3.jar").getFile()));
+    Assert.assertTrue("test3 directory doesn't exist",
+      fileSystem.exists(new Path(testDirectory, "test3")));
+    Assert.assertTrue("test3/test3.jar file doesn't exist",
+      fileSystem.exists(new Path(testDirectory, "test3/test3.jar")));
   }
 
   @Test

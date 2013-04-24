@@ -25,6 +25,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closer;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -33,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 public class FileSystemApplicationRepository implements ApplicationRepository {
@@ -78,7 +80,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
     if (bundle.isDirectory()) {
       descriptor = deployDirectory(bundle, applicationDirectoryTmp);
     } else if (bundle.isFile()) {
-      descriptor = deployFile(bundle);
+      descriptor = deployFile(name, bundle, applicationDirectoryTmp);
     } else {
       throw new ApplicationRepositoryException(
         "Don't know how to deploy bundle:" + bundle + " (not a file or directory)");
@@ -101,9 +103,18 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
     return descriptor;
   }
 
-  private BundleDescriptor deployFile(File bundle) {
-    throw new UnsupportedOperationException(
-      "We don't yet properly unpack and deploy file bundles:" + bundle);
+  private BundleDescriptor deployFile(String name, File bundle, Path applicationDirectory) {
+    Path bundlePath = new Path(bundle.getAbsolutePath());
+
+    try {
+      fileSystem.copyFromLocalFile(false, true, bundlePath,
+        new Path(applicationDirectory, name + ".jar"));
+    } catch (IOException e) {
+      // TODO: Specialize this exception. -esammer
+      throw Throwables.propagate(e);
+    }
+
+    return null;
   }
 
   private BundleDescriptor deployDirectory(File bundle, Path applicationDirectory) {
@@ -150,7 +161,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
   }
 
   @Override
-  public BundleDescriptor get(String name) {
+  public BundleDescriptor getDescriptor(String name) {
     Preconditions.checkArgument(name != null, "Name may not be null");
 
     Path applicationDirectory = new Path(directory, name);
@@ -174,6 +185,27 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
         throw Throwables.propagate(e);
       }
     }
+  }
+
+  @Override
+  public InputSupplier<InputStream> getBundleSupplier(String name) {
+    Preconditions.checkArgument(name != null, "Name may not be null");
+
+    final Path bundleFile = new Path(directory, name + ".jar");
+
+    return new InputSupplier<InputStream>() {
+
+      @Override
+      public InputStream getInput() {
+        try {
+          return fileSystem.open(bundleFile);
+        } catch (IOException e) {
+          // TODO: Specialize this exception. -esammer
+          throw Throwables.propagate(e);
+        }
+      }
+
+    };
   }
 
   @Override
