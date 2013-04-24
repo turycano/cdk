@@ -20,14 +20,9 @@ import com.cloudera.data.DatasetDescriptor;
 import com.cloudera.data.DatasetRepository;
 import com.cloudera.data.DatasetWriter;
 import com.cloudera.data.filesystem.FileSystemDatasetRepository;
-import java.io.IOException;
+import java.net.URI;
 import java.util.Random;
-import org.apache.avro.Schema;
-import org.apache.avro.reflect.ReflectData;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -37,18 +32,14 @@ import org.apache.hadoop.util.ToolRunner;
 public class CreateUserDatasetPojo extends Configured implements Tool {
 
   @Override
-  public int run(String[] args) throws IOException {
+  public int run(String[] args) throws Exception {
 
     // Construct a local filesystem dataset repository rooted at /tmp/data
-    FileSystem fs = FileSystem.getLocal(new Configuration());
-    Path root = new Path("/tmp/data");
-    DatasetRepository repo = new FileSystemDatasetRepository(fs, root);
-
-    // Generate an Avro schema from the User class
-    Schema schema = ReflectData.get().getSchema(User.class);
+    DatasetRepository repo = new FileSystemDatasetRepository.Builder()
+        .rootDirectory(new URI("/tmp/data")).get();
 
     // Create a dataset of users with the Avro schema in the repository
-    DatasetDescriptor descriptor = new DatasetDescriptor.Builder().schema(schema).get();
+    DatasetDescriptor descriptor = new DatasetDescriptor.Builder().schema(User.class).get();
     Dataset users = repo.create("users", descriptor);
 
     // Get a writer for the dataset and write some users to it
