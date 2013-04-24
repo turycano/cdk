@@ -28,6 +28,6 @@ public interface ApplicationRepository {
 
   BundleDescriptor getDescriptor(String name);
 
-  InputSupplier<InputStream> getBundleSupplier(String name);
+  InputSupplier<? extends InputStream> getBundleSupplier(String name);
 
 }

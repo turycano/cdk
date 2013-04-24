@@ -191,7 +191,7 @@ public class FileSystemApplicationRepository implements ApplicationRepository {
   public InputSupplier<InputStream> getBundleSupplier(String name) {
     Preconditions.checkArgument(name != null, "Name may not be null");
 
-    final Path bundleFile = new Path(directory, name + ".jar");
+    final Path bundleFile = new Path(new Path(directory, name), name + ".jar");
 
     return new InputSupplier<InputStream>() {
 
