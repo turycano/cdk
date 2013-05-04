@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cloudera.data;
+/**
+ * Provides a dataset implementation that uses the Hive/HCatalog metastore for metadata,
+ * and stores data in a Hadoop {@link org.apache.hadoop.fs.FileSystem}.
+ */
+@ParametersAreNonnullByDefault
+package com.cloudera.data.hcatalog;
 
-import com.cloudera.data.impl.Accessor;
-
-final class AccessorImpl extends Accessor {
-
-  @Override
-  public Format newFormat(String name) {
-    return new Format(name);
-  }
-  @Override
-  public PartitionKey newPartitionKey(Object... values) {
-    return new PartitionKey(values);
-  }
-
-  @Override
-  public PartitionStrategy getSubpartitionStrategy(PartitionStrategy partitionStrategy, int startIndex) {
-    return partitionStrategy.getSubpartitionStrategy(startIndex);
-  }
-}
+import javax.annotation.ParametersAreNonnullByDefault;

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2013 Cloudera Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,33 +17,24 @@ package com.cloudera.data;
 
 /**
  * <p>
- * Exception thrown for metadata provider-related failures.
- * </p>
- * <p>
- * Implementations of the {@link MetadataProvider} interface throw this
- * exception if any of their operations fail. This is a runtime (unchecked)
- * exception.
+ * Contains constant definitions for the standard {@link Format} instances supported
+ * by the library. {@link #AVRO} is the default format.
  * </p>
  *
- * @see MetadataProvider
  * @since 0.2.0
  */
-public class MetadataProviderException extends RuntimeException {
+public class Formats {
+  private Formats() { }
 
-  public MetadataProviderException() {
-    super();
-  }
+  /**
+   * AVRO: the
+   * <a href="http://avro.apache.org/docs/current/spec.html#Object+Container+Files">Avro
+   * row-oriented format</a>
+   */
+  public static final Format AVRO = new Format("avro");
 
-  public MetadataProviderException(String message) {
-    super(message);
-  }
-
-  public MetadataProviderException(String message, Throwable t) {
-    super(message, t);
-  }
-
-  public MetadataProviderException(Throwable t) {
-    super(t);
-  }
-
+  /**
+   * PARQUET: the <a href="http://parquet.io/">Parquet columnar format</a>
+   */
+  public static final Format PARQUET = new Format("parquet");
 }

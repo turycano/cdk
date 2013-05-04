@@ -47,10 +47,10 @@ import java.io.IOException;
  * dependencies above and then perform dataset-related operations using any of
  * the provided methods. The primary methods of interest will be
  * {@link #create(String, DatasetDescriptor)}, {@link #get(String)}, and
- * {@link #drop(String)} which create a new dataset, or load an existing
- * dataset, respectively. Once a dataset has been created or loaded, users can
- * invoke the appropriate {@link Dataset} methods to get a reader or writer as
- * needed.
+ * {@link #drop(String)} which create a new dataset, load an existing
+ * dataset, or delete an existing dataset, respectively. Once a dataset has been created
+ * or loaded, users can invoke the appropriate {@link Dataset} methods to get a reader
+ * or writer as needed.
  * </p>
  *
  * @see DatasetRepository
@@ -189,7 +189,17 @@ public class FileSystemDatasetRepository implements DatasetRepository {
     }
   }
 
-  private Path pathForDataset(String name) {
+  /**
+   * <p>
+   * Implementations should return the fully-qualified path of the data directory for
+   * the dataset with the given name.
+   * </p>
+   * <p>
+   * This method is for internal use only and users should not call it directly.
+   * </p>
+   * @since 0.2.0
+   */
+  protected Path pathForDataset(String name) {
     Preconditions.checkState(rootDirectory != null,
       "Dataset repository root directory can not be null");
 
@@ -203,18 +213,33 @@ public class FileSystemDatasetRepository implements DatasetRepository {
       .add("fileSystem", fileSystem).toString();
   }
 
+  /**
+   * @return the root directory in the filesystem where datasets are stored.
+   */
   public Path getRootDirectory() {
     return rootDirectory;
   }
 
+  /**
+   * @return the {@link FileSystem} on which datasets are stored.
+   */
   public FileSystem getFileSystem() {
     return fileSystem;
   }
 
+  /**
+   * @return the {@link MetadataProvider} being used by this repository.
+   * @since 0.2.0
+   */
   public MetadataProvider getMetadataProvider() {
     return metadataProvider;
   }
 
+  /**
+   * A fluent builder to aid in the construction of {@link FileSystemDatasetRepository}
+   * instances.
+   * @since 0.2.0
+   */
   public static class Builder implements Supplier<FileSystemDatasetRepository> {
 
     private FileSystem fileSystem;
