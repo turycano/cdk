@@ -32,6 +32,8 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -157,6 +159,28 @@ class FileSystemDataset implements Dataset {
         new DatasetDescriptor.Builder().schema(schema).format(descriptor.getFormat())
           .partitionStrategy(subpartitionStrategy).get())
       .directory(partitionDirectory).partitionKey(key).get();
+  }
+
+  @Override
+  public Dataset getPartition(URI uri, boolean allowCreate) {
+    Preconditions.checkState(descriptor.isPartitioned(),
+        "Attempt to get a partition on a non-partitioned dataset (name:%s)",
+        name);
+
+    URI relativizedUri = directory.toUri().relativize(uri);
+    // TODO: error cases in relativization
+
+    Iterable<String> parts = Splitter.on('/').split(relativizedUri.getPath().toString());
+    List<Object> values = Lists.newArrayList();
+    int i = 0;
+    for (String part : parts) {
+      String stringValue = Iterables.get(Splitter.on('=').split(part), 1);
+      Object value = partitionStrategy.getFieldPartitioners().get(i++)
+          .valueFromString(stringValue);
+      values.add(value);
+    }
+    return getPartition(Accessor.getDefault().newPartitionKey(
+        values.toArray(new Object[0])), allowCreate);
   }
 
   @Override

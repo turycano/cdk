@@ -28,6 +28,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -226,6 +227,35 @@ public class TestFileSystemDataset {
         1,
         readTestUsersInPartition(ds, key,
           "email"));
+  }
+
+  @Test
+  public void testWriteToSubpartition2() throws Exception {
+    PartitionStrategy partitionStrategy = new PartitionStrategy.Builder()
+        .hash("username", "username_part", 2).hash("email", 3).get();
+
+    FileSystemDataset ds = new FileSystemDataset.Builder()
+        .fileSystem(fileSystem)
+        .directory(testDirectory)
+        .name("partitioned-users")
+        .descriptor(
+            new DatasetDescriptor.Builder().schema(USER_SCHEMA).format(format)
+                .partitionStrategy(partitionStrategy).get()).get();
+
+    URI partitionUri = new URI(testDirectory.toUri().toString() + "/username_part=1");
+    FileSystemDataset userPartition = (FileSystemDataset)
+        ds.getPartition(partitionUri, true);
+    PartitionKey key = partitionStrategy.partitionKey(1);
+    Assert.assertEquals(key, userPartition.getPartitionKey());
+
+    writeTestUsers(userPartition, 1);
+    Assert.assertTrue("Partitioned directory exists",
+        fileSystem.exists(new Path(testDirectory, "username_part=1/email=2")));
+    Assert
+        .assertEquals(
+            1,
+            readTestUsersInPartition(ds, key,
+                "email"));
   }
 
   @Test

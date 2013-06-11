@@ -15,6 +15,7 @@
  */
 package com.cloudera.data;
 
+import java.net.URI;
 import org.apache.avro.Schema;
 
 import javax.annotation.concurrent.Immutable;
@@ -67,6 +68,8 @@ public interface Dataset {
    * @throws DatasetException
    */
   Dataset getPartition(PartitionKey key, boolean autoCreate);
+
+  Dataset getPartition(URI uri, boolean autoCreate);
 
   /**
    * Drop a partition for a {@link PartitionKey}. Dropping a partition that
