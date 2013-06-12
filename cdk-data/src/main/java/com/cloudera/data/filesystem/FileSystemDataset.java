@@ -163,6 +163,7 @@ class FileSystemDataset implements Dataset {
   }
 
   @Override
+  @Nullable
   public Dataset getPartition(URI uri, boolean allowCreate) {
     Preconditions.checkState(descriptor.isPartitioned(),
         "Attempt to get a partition on a non-partitioned dataset (name:%s)",
