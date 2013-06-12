@@ -299,9 +299,10 @@ class FileSystemDataset implements Dataset {
   private Path toDirectoryName(Path dir, PartitionKey key) {
     Path result = dir;
     for (int i = 0; i < key.getLength(); i++) {
-      String fieldName = partitionStrategy.getFieldPartitioners().get(i)
-        .getName();
-      result = new Path(result, fieldName + "=" + key.get(i));
+      FieldPartitioner fp = partitionStrategy.getFieldPartitioners().get(i);
+      String fieldName = fp.getName();
+      String fieldValue = fp.valueToString(key.get(i));
+      result = new Path(result, fieldName + "=" + fieldValue);
     }
     return result;
   }
