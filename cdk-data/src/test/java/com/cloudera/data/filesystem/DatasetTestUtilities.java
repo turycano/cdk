@@ -18,6 +18,7 @@ package com.cloudera.data.filesystem;
 import com.cloudera.data.Dataset;
 import com.cloudera.data.DatasetReader;
 import com.cloudera.data.DatasetWriter;
+import com.cloudera.data.FieldPartitioner;
 import com.cloudera.data.PartitionKey;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Set;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
@@ -131,5 +133,38 @@ public class DatasetTestUtilities {
       }
     }));
     Assert.assertEquals(expected, actual);
+  }
+
+  public static int readTestUsersInPartition(FileSystemDataset ds, PartitionKey key,
+      String subpartitionName) {
+    int readCount = 0;
+    DatasetReader<GenericData.Record> reader = null;
+    try {
+      Dataset partition = ds.getPartition(key, false);
+      if (subpartitionName != null) {
+        List<FieldPartitioner> fieldPartitioners = partition.getDescriptor()
+            .getPartitionStrategy().getFieldPartitioners();
+        Assert.assertEquals(1, fieldPartitioners.size());
+        Assert.assertEquals(subpartitionName, fieldPartitioners.get(0)
+            .getName());
+      }
+      reader = partition.getReader();
+      reader.open();
+      while (reader.hasNext()) {
+        GenericData.Record actualRecord = reader.read();
+        Assert.assertEquals(actualRecord.toString(), key.get(0), (actualRecord
+            .get("username").hashCode() & Integer.MAX_VALUE) % 2);
+        if (key.getLength() > 1) {
+          Assert.assertEquals(key.get(1),
+              (actualRecord.get("email").hashCode() & Integer.MAX_VALUE) % 3);
+        }
+        readCount++;
+      }
+    } finally {
+      if (reader != null) {
+        reader.close();
+      }
+    }
+    return readCount;
   }
 }

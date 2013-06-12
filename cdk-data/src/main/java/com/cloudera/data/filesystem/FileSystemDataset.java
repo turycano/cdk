@@ -20,6 +20,7 @@ import com.cloudera.data.DatasetDescriptor;
 import com.cloudera.data.DatasetException;
 import com.cloudera.data.DatasetReader;
 import com.cloudera.data.DatasetWriter;
+import com.cloudera.data.FieldPartitioner;
 import com.cloudera.data.Formats;
 import com.cloudera.data.PartitionKey;
 import com.cloudera.data.PartitionStrategy;
@@ -33,6 +34,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -166,16 +168,41 @@ class FileSystemDataset implements Dataset {
         "Attempt to get a partition on a non-partitioned dataset (name:%s)",
         name);
 
-    URI relativizedUri = directory.toUri().relativize(uri);
-    // TODO: error cases in relativization
+    URI partitionUri = fileSystem.makeQualified(new Path(uri)).toUri();
+    URI directoryUri = directory.toUri();
+    URI relativizedUri = directoryUri.relativize(partitionUri);
+
+    if (relativizedUri.equals(partitionUri)) {
+      throw new IllegalArgumentException(String.format("Partition URI %s has different " +
+          "root directory to dataset (directory: %s).", partitionUri, directoryUri));
+    }
 
     Iterable<String> parts = Splitter.on('/').split(relativizedUri.getPath());
+
+    List<FieldPartitioner> fieldPartitioners = partitionStrategy.getFieldPartitioners();
+    if (Iterables.size(parts) > fieldPartitioners.size()) {
+      throw new IllegalArgumentException(String.format("Too many partition directories " +
+          "for %s (%s), expecting %s.", partitionUri, Iterables.size(parts),
+          fieldPartitioners.size()));
+    }
+
     List<Object> values = Lists.newArrayList();
     int i = 0;
     for (String part : parts) {
-      String stringValue = Iterables.get(Splitter.on('=').split(part), 1);
-      Object value = partitionStrategy.getFieldPartitioners().get(i++)
-          .valueFromString(stringValue);
+      Iterator<String> split = Splitter.on('=').split(part).iterator();
+      String fieldName = split.next();
+      FieldPartitioner fp = fieldPartitioners.get(i++);
+      if (!fieldName.equals(fp.getName())) {
+        throw new IllegalArgumentException(String.format("Unrecognized partition name " +
+            "'%s' in partition %s, expecting '%s'.", fieldName, partitionUri,
+            fp.getName()));
+      }
+      if (!split.hasNext()) {
+        throw new IllegalArgumentException(String.format("Missing partition value for " +
+            "'%s' in partition %s.", fieldName, partitionUri));
+      }
+      String stringValue = split.next();
+      Object value = fp.valueFromString(stringValue);
       values.add(value);
     }
     return getPartition(Accessor.getDefault().newPartitionKey(
@@ -336,7 +363,8 @@ class FileSystemDataset implements Dataset {
       Preconditions
         .checkState(this.fileSystem != null, "No filesystem defined");
 
-      return new FileSystemDataset(fileSystem, directory, name, descriptor,
+      Path absoluteDirectory = fileSystem.makeQualified(directory);
+      return new FileSystemDataset(fileSystem, absoluteDirectory, name, descriptor,
         partitionKey);
     }
   }

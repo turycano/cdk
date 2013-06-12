@@ -18,20 +18,15 @@ package com.cloudera.data.filesystem;
 import com.cloudera.data.Dataset;
 import com.cloudera.data.DatasetDescriptor;
 import com.cloudera.data.DatasetException;
-import com.cloudera.data.DatasetReader;
-import com.cloudera.data.FieldPartitioner;
 import com.cloudera.data.Format;
 import com.cloudera.data.Formats;
 import com.cloudera.data.PartitionKey;
 import com.cloudera.data.PartitionStrategy;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.hadoop.conf.Configuration;
@@ -222,40 +217,7 @@ public class TestFileSystemDataset {
     writeTestUsers(userPartition, 1);
     Assert.assertTrue("Partitioned directory exists",
       fileSystem.exists(new Path(testDirectory, "username_part=1/email=2")));
-    Assert
-      .assertEquals(
-        1,
-        readTestUsersInPartition(ds, key,
-          "email"));
-  }
-
-  @Test
-  public void testWriteToSubpartition2() throws Exception {
-    PartitionStrategy partitionStrategy = new PartitionStrategy.Builder()
-        .hash("username", "username_part", 2).hash("email", 3).get();
-
-    FileSystemDataset ds = new FileSystemDataset.Builder()
-        .fileSystem(fileSystem)
-        .directory(testDirectory)
-        .name("partitioned-users")
-        .descriptor(
-            new DatasetDescriptor.Builder().schema(USER_SCHEMA).format(format)
-                .partitionStrategy(partitionStrategy).get()).get();
-
-    URI partitionUri = new URI(testDirectory.toUri().toString() + "/username_part=1");
-    FileSystemDataset userPartition = (FileSystemDataset)
-        ds.getPartition(partitionUri, true);
-    PartitionKey key = partitionStrategy.partitionKey(1);
-    Assert.assertEquals(key, userPartition.getPartitionKey());
-
-    writeTestUsers(userPartition, 1);
-    Assert.assertTrue("Partitioned directory exists",
-        fileSystem.exists(new Path(testDirectory, "username_part=1/email=2")));
-    Assert
-        .assertEquals(
-            1,
-            readTestUsersInPartition(ds, key,
-                "email"));
+    Assert.assertEquals(1, readTestUsersInPartition(ds, key, "email"));
   }
 
   @Test
@@ -296,39 +258,6 @@ public class TestFileSystemDataset {
     }
 
     Assert.assertNotNull(caught);
-  }
-
-  private int readTestUsersInPartition(FileSystemDataset ds, PartitionKey key,
-    String subpartitionName) {
-    int readCount = 0;
-    DatasetReader<Record> reader = null;
-    try {
-      Dataset partition = ds.getPartition(key, false);
-      if (subpartitionName != null) {
-        List<FieldPartitioner> fieldPartitioners = partition.getDescriptor()
-          .getPartitionStrategy().getFieldPartitioners();
-        Assert.assertEquals(1, fieldPartitioners.size());
-        Assert.assertEquals(subpartitionName, fieldPartitioners.get(0)
-          .getName());
-      }
-      reader = partition.getReader();
-      reader.open();
-      while (reader.hasNext()) {
-        Record actualRecord = reader.read();
-        Assert.assertEquals(actualRecord.toString(), key.get(0), (actualRecord
-          .get("username").hashCode() & Integer.MAX_VALUE) % 2);
-        if (key.getLength() > 1) {
-          Assert.assertEquals(key.get(1),
-            (actualRecord.get("email").hashCode() & Integer.MAX_VALUE) % 3);
-        }
-        readCount++;
-      }
-    } finally {
-      if (reader != null) {
-        reader.close();
-      }
-    }
-    return readCount;
   }
 
 }
