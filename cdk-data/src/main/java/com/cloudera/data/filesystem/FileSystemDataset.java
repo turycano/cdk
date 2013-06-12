@@ -33,7 +33,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.avro.Schema;
@@ -170,7 +169,7 @@ class FileSystemDataset implements Dataset {
     URI relativizedUri = directory.toUri().relativize(uri);
     // TODO: error cases in relativization
 
-    Iterable<String> parts = Splitter.on('/').split(relativizedUri.getPath().toString());
+    Iterable<String> parts = Splitter.on('/').split(relativizedUri.getPath());
     List<Object> values = Lists.newArrayList();
     int i = 0;
     for (String part : parts) {
@@ -180,7 +179,7 @@ class FileSystemDataset implements Dataset {
       values.add(value);
     }
     return getPartition(Accessor.getDefault().newPartitionKey(
-        values.toArray(new Object[0])), allowCreate);
+        values.toArray(new Object[values.size()])), allowCreate);
   }
 
   @Override
